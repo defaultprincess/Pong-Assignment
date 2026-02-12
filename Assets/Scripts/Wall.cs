@@ -11,11 +11,12 @@ public class Wall : MonoBehaviour
         Rigidbody rb = collision.rigidbody;
         if (rb == null) return;
 
-        float speed = rb.linearVelocity.magnitude;
         Vector3 incoming = rb.linearVelocity;
+        if (incoming.sqrMagnitude < 0.0001f) incoming = Vector3.up;
+
+        float s = Mathf.Max(incoming.magnitude, minSpeed);
         Vector3 normal = collision.contacts[0].normal;
 
-        Vector3 reflected = Vector3.Reflect(incoming, normal);
-        rb.linearVelocity = reflected.normalized * Mathf.Max(speed, minSpeed);
+        rb.linearVelocity = Vector3.Reflect(incoming.normalized, normal).normalized * s;
     }
 }

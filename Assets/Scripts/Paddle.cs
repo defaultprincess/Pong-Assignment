@@ -5,13 +5,23 @@ public class Paddle : MonoBehaviour
 {
     public Key upKey = Key.W;
     public Key downKey = Key.S;
+
     public float forceStrength = 10f;
 
-    Rigidbody rBody;
+    public float minBallSpeed = 10f;
+    public float speedIncrease = 0.5f;
+
+    public AudioSource audioSource;
+    public AudioClip hitClip;
+    public float minPitch = 0.9f;
+    public float maxPitch = 1.3f;
+
+    Rigidbody rb;
 
     void Awake()
     {
-        rBody = GetComponent<Rigidbody>();
+        rb = GetComponent<Rigidbody>();
+        if (audioSource == null) audioSource = GetComponent<AudioSource>();
     }
 
     void Update()
@@ -21,21 +31,35 @@ public class Paddle : MonoBehaviour
         if (Keyboard.current[downKey].isPressed) dir -= 1f;
 
         if (dir != 0f)
-            rBody.AddForce(new Vector3(0f, 0f, dir * forceStrength), ForceMode.Force);
+            rb.AddForce(new Vector3(0f, 0f, dir * forceStrength), ForceMode.Force);
     }
 
     void OnCollisionEnter(Collision collision)
     {
         if (!collision.gameObject.CompareTag("Ball")) return;
 
-        Rigidbody ballRigidbody = collision.rigidbody;
-        if (ballRigidbody == null) return;
+        Rigidbody ballRb = collision.rigidbody;
+        if (ballRb == null) return;
 
-        float speed = ballRigidbody.linearVelocity.magnitude;
-        Vector3 incoming = ballRigidbody.linearVelocity;
+        Vector3 incoming = ballRb.linearVelocity;
+        if (incoming.sqrMagnitude < 0.0001f) incoming = new Vector3(0f, 1f, 0f);
+
         Vector3 normal = collision.contacts[0].normal;
 
-        Vector3 reflected = Vector3.Reflect(incoming, normal);
-        ballRigidbody.linearVelocity = reflected.normalized * Mathf.Max(speed, 10f);
+        float baseSpeed = Mathf.Max(incoming.magnitude, minBallSpeed);
+        float newSpeed = baseSpeed + speedIncrease;
+
+        Vector3 reflectedDir = Vector3.Reflect(incoming.normalized, normal).normalized;
+        ballRb.linearVelocity = reflectedDir * newSpeed;
+
+        if (audioSource != null && hitClip != null)
+        {
+            float speedT = Mathf.InverseLerp(minBallSpeed, minBallSpeed + 12f, newSpeed);
+            float hitOffset = Mathf.Abs(collision.GetContact(0).point.z - transform.position.z);
+            float hitT = Mathf.InverseLerp(0f, 1.5f, hitOffset);
+
+            audioSource.pitch = Mathf.Lerp(minPitch, maxPitch, Mathf.Max(speedT, hitT));
+            audioSource.PlayOneShot(hitClip);
+        }
     }
 }

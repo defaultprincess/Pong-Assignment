@@ -6,6 +6,7 @@ public class Ball : MonoBehaviour
     public float speed = 10f;
 
     Rigidbody rb;
+    Vector3 lastDir;
 
     void Awake()
     {
@@ -19,12 +20,33 @@ public class Ball : MonoBehaviour
 
     void Start()
     {
-        float dir = Random.value < 0.5f ? -1f : 1f;
-        rb.linearVelocity = new Vector3(0f, dir, 0f) * speed;
+        float dirY = Random.value < 0.5f ? -1f : 1f;
+        lastDir = new Vector3(0f, dirY, 0f).normalized;
+        rb.linearVelocity = lastDir * speed;
     }
 
     void FixedUpdate()
     {
-        rb.linearVelocity = rb.linearVelocity.normalized * speed;
+        Vector3 v = rb.linearVelocity;
+
+        if (v.sqrMagnitude > 0.0001f)
+        {
+            lastDir = v.normalized;
+            speed = Mathf.Max(speed, v.magnitude);
+        }
+
+        rb.linearVelocity = lastDir * speed;
+    }
+
+    public void Serve(int towardY)
+    {
+        rb.position = rb.position;
+        rb.linearVelocity = Vector3.zero;
+
+        speed = Mathf.Max(1f, speed);
+        float dirY = towardY == 0 ? (Random.value < 0.5f ? -1f : 1f) : Mathf.Sign(towardY);
+        lastDir = new Vector3(0f, dirY, Random.Range(-0.2f, 0.2f)).normalized;
+
+        rb.linearVelocity = lastDir * speed;
     }
 }

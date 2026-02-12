@@ -3,6 +3,8 @@ using TMPro;
 
 public class ScoreManager : MonoBehaviour
 {
+    public ScoreTextFX leftFX;
+    public ScoreTextFX rightFX;
     public int leftScore;
     public int rightScore;
 
@@ -27,11 +29,13 @@ public class ScoreManager : MonoBehaviour
         {
             rightScore++;
             Debug.Log($"Right scored! Score: Left {leftScore} - Right {rightScore}");
+            if (rightFX) rightFX.Play();
         }
         else
         {
             leftScore++;
             Debug.Log($"Left scored! Score: Left {leftScore} - Right {rightScore}");
+            if (leftFX) leftFX.Play();
         }
 
         if (leftScore >= winningScore || rightScore >= winningScore)
@@ -48,6 +52,7 @@ public class ScoreManager : MonoBehaviour
 
         UpdateUI();
         ResetBall(goalHit == Goal.Side.Left ? -1 : 1);
+        
     }
 
     void UpdateUI()
